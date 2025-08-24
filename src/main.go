@@ -8,10 +8,12 @@ import (
 	"net/smtp"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config email configuration struct
 type Config struct {
+	FromName string
 	From     string
 	Password string
 	To       string
@@ -34,6 +36,7 @@ func showHelp() {
 	fmt.Println("  -h           Show this help message")
 	fmt.Println("")
 	fmt.Println("Required Environment Variables:")
+	fmt.Println("  EMAIL_FROM_NAME     Sender email display name")
 	fmt.Println("  EMAIL_FROM          Sender email address (e.g., your_email@gmail.com)")
 	fmt.Println("  EMAIL_PASSWORD      Email password or app-specific password")
 	fmt.Println("  EMAIL_TO            Recipient email address")
@@ -42,6 +45,7 @@ func showHelp() {
 	fmt.Println("")
 	fmt.Println("Examples:")
 	fmt.Println("  # Set environment variables first:")
+	fmt.Println("  export EMAIL_FROM_NAME=\"display name\"")
 	fmt.Println("  export EMAIL_FROM=\"your_email@gmail.com\"")
 	fmt.Println("  export EMAIL_PASSWORD=\"your_app_password\"")
 	fmt.Println("  export EMAIL_TO=\"recipient@example.com\"")
@@ -74,6 +78,10 @@ func parseFlags() *Config {
 
 	// Read configuration from environment variables
 	from := getEnvOrFail("EMAIL_FROM", "Sender email address")
+	fromName := os.Getenv("EMAIL_FROM_NAME")
+	if "" == fromName {
+		fromName = from
+	}
 	password := getEnvOrFail("EMAIL_PASSWORD", "Email password")
 	to := getEnvOrFail("EMAIL_TO", "Recipient email address")
 	smtpHost := getEnvOrFail("EMAIL_SMTP_HOST", "Mail server host")
@@ -99,6 +107,7 @@ func parseFlags() *Config {
 
 	return &Config{
 		From:     from,
+		FromName: fromName,
 		Password: password,
 		To:       to,
 		Subject:  *subject,
@@ -181,7 +190,18 @@ func sendEmail(config *Config) {
 		log.Fatalf("Failed to create data writer: %v", err)
 	}
 
-	messageStr := fmt.Sprintf("Subject: %s\r\n\r\n%s\r\n", config.Subject, config.Body)
+	// 构建完整的邮件头，包含显示名称
+	headers := []string{
+		fmt.Sprintf("From: %s<%s>", config.FromName, config.From),
+		fmt.Sprintf("To: %s", config.To),
+		fmt.Sprintf("Subject: %s", config.Subject),
+		"MIME-Version: 1.0",
+		"Content-Type: text/plain; charset=UTF-8",
+		"",
+	}
+	log.Println(headers)
+
+	messageStr := strings.Join(headers, "\r\n") + config.Body + "\r\n"
 	message := []byte(messageStr)
 
 	if _, err = w.Write(message); err != nil {
