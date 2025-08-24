@@ -199,7 +199,6 @@ func sendEmail(config *Config) {
 		"Content-Type: text/plain; charset=UTF-8",
 		"",
 	}
-	log.Println(headers)
 
 	messageStr := strings.Join(headers, "\r\n") + config.Body + "\r\n"
 	message := []byte(messageStr)
@@ -215,8 +214,6 @@ func sendEmail(config *Config) {
 	if err = client.Quit(); err != nil {
 		log.Fatalf("Failed to quit gracefully: %v", err)
 	}
-
-	fmt.Println("Email sent successfully with SSL!")
 }
 
 func main() {
