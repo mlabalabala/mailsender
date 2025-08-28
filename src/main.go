@@ -192,7 +192,7 @@ func sendEmail(config *Config) {
 
 	// 构建完整的邮件头，包含显示名称
 	headers := []string{
-		fmt.Sprintf("From: %s<%s>", config.FromName, config.From),
+		fmt.Sprintf("From: %s <%s>", config.FromName, config.From),
 		fmt.Sprintf("To: %s", config.To),
 		fmt.Sprintf("Subject: %s", config.Subject),
 		"MIME-Version: 1.0",
