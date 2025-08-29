@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/mail"
 	"net/smtp"
 	"os"
 	"strconv"
@@ -190,20 +191,23 @@ func sendEmail(config *Config) {
 		log.Fatalf("Failed to create data writer: %v", err)
 	}
 
-	// 构建完整的邮件头，包含显示名称
-	headers := []string{
-		fmt.Sprintf("From: %s <%s>", config.FromName, config.From),
-		fmt.Sprintf("To: %s", config.To),
-		fmt.Sprintf("Subject: %s", config.Subject),
-		"MIME-Version: 1.0",
-		"Content-Type: text/plain; charset=UTF-8",
-		"",
+	receiverName := strings.Split(config.To, "@")[0]
+	// 构建邮件消息
+	fromAddress := mail.Address{Name: config.FromName, Address: config.From}
+	toAddress := mail.Address{Name: receiverName, Address: config.To}
+
+	header := make(map[string]string)
+	header["From"] = fromAddress.String()
+	header["To"] = toAddress.String()
+	header["Subject"] = config.Subject
+	header["MIME-Version"] = "1.0"
+	header["Content-Type"] = "text/plain; charset=\"utf-8\""
+	message := ""
+	for k, v := range header {
+		message += k + ": " + v + "\r\n"
 	}
-
-	messageStr := strings.Join(headers, "\r\n") + config.Body + "\r\n"
-	message := []byte(messageStr)
-
-	if _, err = w.Write(message); err != nil {
+	message += "\r\n" + config.Body
+	if _, err = w.Write([]byte(message)); err != nil {
 		log.Fatalf("Failed to write message: %v", err)
 	}
 	if err = w.Close(); err != nil {

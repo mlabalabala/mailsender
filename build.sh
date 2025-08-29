@@ -2,7 +2,7 @@
 
 APP_NAME="mailsender"
 BUILD_DIR="./bin"
-SRC_DIR="./src"
+SRC_DIR="."
 
 PLATFORMS=(
     "linux/amd64"
